@@ -1,0 +1,20 @@
+{
+  "manifest_version": 3,
+  "name": "Ant Farm Idle",
+  "version": "1.8",
+  "description": "A retro ant colony idle game that lives in your toolbar.",
+  "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  "action": {
+    "default_title": "Ant Farm Idle",
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "48": "icons/icon48.png"
+    }
+  },
+  "permissions": ["storage"]
+}

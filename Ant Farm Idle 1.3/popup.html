@@ -1,0 +1,717 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Ant Farm</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div class="window">
+
+    <!-- Title bar -->
+    <div class="titlebar">
+      <div class="title can-edit" id="title" data-tip="Click to rename" role="textbox" aria-label="Name of your ant farm">
+        <span class="px" id="title-text"></span><span class="caret" id="title-caret" hidden></span><canvas class="title-stars" id="title-stars" hidden></canvas>
+      </div>
+    </div>
+
+    <div class="content">
+
+      <!-- Side panel -->
+      <div class="panel">
+        <!-- Food counter: stays visible on every screen -->
+        <div class="group">
+          <div class="label"><span class="px" data-text="Food"></span></div>
+          <div class="food-row">
+            <div class="readout"><span class="px" id="food"></span></div>
+            <!-- Food per second, shown at once on hover -->
+            <div class="readout food-help" id="food-help" data-tip=" " data-tip-now><span class="px" data-text="?"></span></div>
+          </div>
+        </div>
+
+        <!-- Main screen -->
+        <div class="screen" id="screen-main">
+          <div class="group menu">
+            <button class="btn btn-wide" id="btn-ants" aria-label="Ants" data-tip="Ants">
+              <span class="sprite" data-sprite="ant"></span>
+            </button>
+            <div class="icon-row">
+              <button class="btn btn-icon" id="btn-dig" aria-label="Dig" data-tip="Dig">
+                <span class="sprite" data-sprite="shovel"></span>
+              </button>
+              <button class="btn btn-icon" id="btn-upgrade" aria-label="Upgrades" data-tip="Upgrades">
+                <span class="sprite" data-sprite="upgrade"></span>
+              </button>
+              <button class="btn btn-icon" id="btn-build" aria-label="Build" data-tip="Build">
+                <span class="sprite" data-sprite="build"></span>
+              </button>
+            </div>
+            <div class="icon-row">
+              <button class="btn btn-flight" id="btn-flight" aria-label="Nuptial flight" data-tip="Nuptial Flight">
+                <span class="sprite" data-sprite="flight"></span>
+              </button>
+              <button class="btn btn-icon" id="btn-sat" aria-label="Satellite colony" data-tip="Satellite Colony" hidden>
+                <span class="sprite" data-sprite="satellite"></span>
+              </button>
+            </div>
+            <button class="btn btn-wide" id="btn-settings" aria-label="Settings">
+              <span class="px" data-text="SETTINGS"></span>
+            </button>
+            <div class="icon-row">
+              <button class="btn btn-icon" id="btn-float" aria-label="Open as separate window" data-tip="Open as separate window">
+                <span class="sprite" data-sprite="float"></span>
+              </button>
+              <button class="btn btn-icon" id="btn-ency" aria-label="Encyclopedia" data-tip="Encyclopedia">
+                <span class="sprite" data-sprite="book"></span>
+              </button>
+              <!-- Achievements: appears once a run has earned enough for a honeydew; a red ! when one is ready -->
+              <button class="btn btn-icon btn-achieve" id="btn-achieve" aria-label="Achievements" data-tip="Achievements" hidden>
+                <span class="sprite" data-sprite="medal"></span>
+                <span class="sprite ach-alert" id="achieve-alert" data-sprite="alert" hidden></span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Ants screen -->
+        <div class="screen" id="screen-ants" hidden>
+          <div class="group">
+            <button class="btn btn-wide btn-back" aria-label="Back">
+              <span class="px" data-text="BACK"></span>
+            </button>
+          </div>
+          <!-- Superorganism (perk page II): the colony hatches ants on its own while this is checked -->
+          <div class="group" id="group-auto-hatch" hidden>
+            <button class="check" id="btn-auto-hatch" role="checkbox" aria-checked="true" aria-label="Auto hatch" data-tip="Auto Hatch|Superorganism: a worker|or a soldier, whichever|is cheaper, hatches|whenever you can pay.">
+              <span class="check-box"><span class="sprite" data-sprite="checkMark"></span></span>
+              <span class="check-name"><span class="px" data-text="Auto"></span><span class="px" data-text="hatch"></span></span>
+            </button>
+          </div>
+          <div class="group">
+            <div class="species" data-tip="Your colony|A harvester ant"><span class="px" id="species-name"></span></div>
+            <div class="label"><span class="px" data-text="Workers"></span></div>
+            <div class="count-row">
+              <div class="readout" id="readout-worker" data-tip=" "><span class="px" id="count-worker"></span></div>
+              <button class="btn btn-flat" id="btn-flat-worker" aria-label="Minor workers" data-tip=" ">
+                <span class="sprite" data-sprite="upgrade" data-scale="1"></span>
+              </button>
+            </div>
+            <div class="buy-row">
+              <button class="btn" id="btn-hatch-worker" aria-label="Hatch worker">
+                <span class="px" id="hatch-label-worker"></span>
+              </button>
+              <div class="readout cost"><span class="px" id="cost-worker"></span></div>
+            </div>
+          </div>
+          <div class="group">
+            <div class="label"><span class="px" data-text="Soldiers"></span></div>
+            <div class="count-row">
+              <div class="readout" id="readout-soldier" data-tip=" "><span class="px" id="count-soldier"></span></div>
+              <button class="btn btn-flat" id="btn-flat-soldier" aria-label="Major soldiers" data-tip=" ">
+                <span class="sprite" data-sprite="upgrade" data-scale="1"></span>
+                <span class="sprite lock" data-sprite="lock" data-scale="1" hidden></span>
+              </button>
+            </div>
+            <div class="buy-row">
+              <button class="btn" id="btn-hatch-soldier" aria-label="Hatch soldier">
+                <span class="px" id="hatch-label-soldier"></span>
+              </button>
+              <div class="readout cost"><span class="px" id="cost-soldier"></span></div>
+            </div>
+          </div>
+          <div class="group" hidden>
+            <!-- The fire ant nest (firenest.js): the queen, her eggs and the worker that marks them -->
+            <div class="readout fire-nest" id="readout-fireAnt" data-tip=" "><canvas id="fire-nest" aria-label="Fire ant nest"></canvas></div>
+            <div class="buy-row">
+              <button class="btn" id="btn-hatch-fireAnt" aria-label="Hatch fire ant">
+                <span class="px" id="hatch-label-fireAnt"></span>
+              </button>
+              <div class="readout cost"><span class="px" id="cost-fireAnt"></span></div>
+            </div>
+          </div>
+          <div class="group" hidden>
+            <div class="label"><span class="px" data-text="Supermajor"></span></div>
+            <div class="readout" id="readout-supermajor" data-tip=" "><span class="px" id="count-supermajor"></span></div>
+            <div class="buy-row">
+              <button class="btn" id="btn-hatch-supermajor" aria-label="Hatch the supermajor">
+                <span class="px" id="hatch-label-supermajor"></span>
+              </button>
+              <div class="readout cost"><span class="px" id="cost-supermajor"></span></div>
+            </div>
+          </div>
+          <div class="group">
+            <div class="label"><span class="px" data-text="Alate"></span></div>
+            <div class="readout" data-tip="Alate|A winged young queen.|Needed to take a|nuptial flight."><span class="px" id="count-alate"></span></div>
+            <div class="buy-row">
+              <button class="btn" id="btn-buy-alate" aria-label="Raise an alate">
+                <span class="px" id="buy-label-alate"></span>
+              </button>
+              <div class="readout cost"><span class="px" id="cost-alate"></span></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Canopy screen (weaver ants): their own food, workers and leaves -->
+        <div class="screen" id="screen-canopy" hidden>
+          <div class="group">
+            <div class="label"><span class="px" data-text="Weaver"></span><span class="px" data-text="Food"></span></div>
+            <div class="readout" id="readout-weaver-food" data-tip=" " data-tip-now><span class="px" id="weaver-food"></span></div>
+          </div>
+          <div class="group">
+            <button class="btn btn-wide" id="btn-weaver-ant" aria-label="Hatch a weaver worker" data-tip=" ">
+              <span class="sprite" data-sprite="ant"></span>
+            </button>
+            <div class="weaver-row">
+              <div class="readout"><span class="px" id="weaver-count"></span></div>
+              <div class="readout cost"><span class="px" id="weaver-cost"></span></div>
+            </div>
+          </div>
+          <div class="group">
+            <div class="weaver-row">
+              <button class="btn btn-icon btn-leaf" id="btn-weaver-leaf" aria-label="Place leaves" aria-pressed="false" data-tip=" ">
+                <span class="sprite" data-sprite="shovel"></span>
+                <span class="sprite leaf-badge" data-sprite="leafBadge"></span>
+              </button>
+              <div class="readout cost"><span class="px" id="leaf-cost"></span></div>
+            </div>
+            <div class="label" id="weaver-branch-label" data-tip=" "><span class="px" id="weaver-branch"></span></div>
+          </div>
+          <!-- The top weaver branch: trade weaver food for food -->
+          <div class="group" id="group-exchange" hidden>
+            <button class="btn btn-wide" id="btn-exchange" aria-label="Trade weaver food for food" data-tip=" "><span class="px" data-text="TRADE"></span></button>
+            <div class="label"><span class="px" id="exchange-rate"></span></div>
+          </div>
+          <div class="group">
+            <button class="check" id="btn-weaver-queen" role="checkbox" aria-checked="false" aria-label="Show queen" data-tip="Show Queen|See the queen inside|the nest all the time.">
+              <span class="check-box"><span class="sprite" data-sprite="checkMark"></span></span>
+              <span class="check-name"><span class="px" data-text="Show"></span><span class="px" data-text="queen"></span></span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Upgrades screen: the upgrade rows are added by popup.js from its UPGRADES list -->
+        <div class="screen" id="screen-upgrades" hidden>
+          <div class="group">
+            <button class="btn btn-wide btn-back" aria-label="Back">
+              <span class="px" data-text="BACK"></span>
+            </button>
+          </div>
+          <!-- Trophic eggs: moved here from the Ants menu (popup.js puts it after the upgrade rows) -->
+          <div class="group compact" id="group-trophic">
+            <div class="label"><span class="px" data-text="Trophic"></span><span class="px" data-text="Eggs"></span></div>
+            <div class="readout" id="readout-trophic" data-tip=" "><span class="px" id="count-trophic"></span></div>
+            <div class="buy-row">
+              <button class="btn" id="btn-buy-trophic" aria-label="Lay a trophic egg">
+                <span class="px" id="buy-label-trophic"></span>
+              </button>
+              <div class="readout cost"><span class="px" id="cost-trophic"></span></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Build screen: things to build. Pheromone trail opens with the Pheromone trails honeydew upgrade. -->
+        <div class="screen" id="screen-build" hidden>
+          <div class="group">
+            <button class="btn btn-wide btn-back" aria-label="Back">
+              <span class="px" data-text="BACK"></span>
+            </button>
+          </div>
+          <div class="group">
+            <div class="icon-row">
+              <button class="btn btn-icon" id="btn-build-granary" aria-label="Granary" aria-pressed="false" data-tip="Granary|Place on a floor.|Holds one seed, which|turns into food. Deeper|granaries pay up to|25% more.">
+                <span class="sprite" data-sprite="granary"></span>
+              </button>
+              <button class="btn btn-icon is-off is-locked" id="btn-build-trail" aria-label="Pheromone trail" aria-pressed="false" aria-disabled="true" data-tip=" ">
+                <span class="sprite" data-sprite="pheromoneTrail"></span>
+                <span class="sprite lock" id="trail-lock" data-sprite="lock"></span>
+              </button>
+              <button class="btn btn-icon is-off is-locked" id="btn-build-aphid" aria-label="Aphid" aria-pressed="false" aria-disabled="true" data-tip=" ">
+                <span class="sprite" data-sprite="aphid" data-scale="3"></span>
+                <span class="sprite lock" id="aphid-lock" data-sprite="lock"></span>
+              </button>
+            </div>
+            <div class="icon-row">
+              <button class="btn btn-icon is-off is-locked" id="btn-build-fungus" aria-label="Fungus garden" aria-pressed="false" aria-disabled="true" data-tip=" ">
+                <span class="sprite" data-sprite="fungus"></span>
+                <span class="sprite lock" id="fungus-lock" data-sprite="lock"></span>
+              </button>
+              <button class="btn btn-icon is-off is-locked" id="btn-build-replete" aria-label="Replete" aria-pressed="false" aria-disabled="true" data-tip=" ">
+                <span class="sprite" data-sprite="replete"></span>
+                <span class="sprite lock" id="replete-lock" data-sprite="lock"></span>
+              </button>
+              <button class="btn btn-icon is-off is-locked" id="btn-build-midden" aria-label="Midden" aria-pressed="false" aria-disabled="true" data-tip=" " hidden>
+                <span class="sprite" data-sprite="midden"></span>
+                <span class="sprite lock" id="midden-lock" data-sprite="lock"></span>
+              </button>
+            </div>
+            <div class="icon-row">
+              <button class="btn btn-icon" id="btn-build-nursery" aria-label="Nursery" aria-pressed="false" data-tip="Nursery|Place on a floor. Each|one lets one more egg|hatch at once. Stays|after a flight." hidden>
+                <span class="sprite" data-sprite="nurseryIcon"></span>
+              </button>
+              <button class="btn btn-icon" id="btn-build-caterpillar" aria-label="Caterpillar" aria-pressed="false" data-tip=" " hidden>
+                <span class="sprite" data-sprite="caterpillarIcon"></span>
+              </button>
+              <button class="btn btn-icon" id="btn-build-delete" aria-label="Remove a structure" aria-pressed="false" data-tip="Remove|Click a structure to|remove it, or drag over|pheromone trail or the|midden to take it away.|Gives a partial refund.">
+                <span class="sprite" data-sprite="trash"></span>
+              </button>
+            </div>
+          </div>
+          <div class="group" id="group-granary" hidden>
+            <div class="label"><span class="px" data-text="Granaries"></span></div>
+            <div class="readout"><span class="px" id="count-granary"></span></div>
+            <div class="label"><span class="px" data-text="Cost"></span></div>
+            <div class="readout"><span class="px" id="granary-cost"></span></div>
+          </div>
+          <div class="group" id="group-nursery" hidden>
+            <div class="label"><span class="px" data-text="Cost"></span></div>
+            <div class="readout"><span class="px" id="nursery-cost"></span></div>
+          </div>
+          <div class="group" id="group-midden" hidden>
+            <div class="label"><span class="px" data-text="Cost"></span></div>
+            <div class="readout"><span class="px" id="midden-cost"></span></div>
+          </div>
+          <div class="group" id="group-trail-cost" hidden>
+            <div class="label"><span class="px" data-text="Trail Cost"></span></div>
+            <div class="readout"><span class="px" id="trail-cost"></span></div>
+          </div>
+          <div class="group" id="group-replete" hidden>
+            <div class="label"><span class="px" data-text="Repletes"></span></div>
+            <div class="readout"><span class="px" id="count-replete"></span></div>
+            <div class="label"><span class="px" data-text="Cost"></span></div>
+            <div class="readout"><span class="px" id="replete-cost"></span></div>
+            <div class="label"><span class="px" data-text="-1 Worker"></span></div>
+          </div>
+          <div class="group" id="group-fungus" hidden>
+            <div class="label"><span class="px" data-text="Gardens"></span></div>
+            <div class="readout"><span class="px" id="count-fungus"></span></div>
+            <div class="label"><span class="px" data-text="Garden Cost"></span></div>
+            <div class="readout"><span class="px" id="fungus-cost"></span></div>
+          </div>
+          <div class="group" id="group-aphid" hidden>
+            <div class="label"><span class="px" data-text="Aphids"></span></div>
+            <div class="readout" id="readout-aphid" data-tip=" "><span class="px" id="count-aphid"></span></div>
+            <div class="label"><span class="px" data-text="Cost"></span></div>
+            <div class="readout"><span class="px" id="aphid-cost"></span></div>
+          </div>
+          <div class="group" id="group-merge-cost" hidden>
+            <div class="label"><span class="px" data-text="Merge Cost"></span></div>
+            <div class="readout"><span class="px" id="merge-cost"></span></div>
+          </div>
+          <!-- Merging: 10 of a structure become one big one (shown once there is anything to merge) -->
+          <div class="group" id="group-merge" hidden>
+            <div class="label"><span class="px" data-text="Merge 10"></span></div>
+            <div class="icon-row">
+              <button class="btn btn-icon" id="btn-merge-vault" aria-label="Seed Vault" aria-pressed="false" data-tip=" ">
+                <span class="sprite" data-sprite="seedVault"></span>
+              </button>
+              <button class="btn btn-icon" id="btn-merge-chamber" aria-label="Fungus Chamber" aria-pressed="false" data-tip=" " hidden>
+                <span class="sprite" data-sprite="fungusChamber"></span>
+              </button>
+              <button class="btn btn-icon" id="btn-merge-honeypot" aria-label="Honeypot Chamber" aria-pressed="false" data-tip=" " hidden>
+                <span class="sprite" data-sprite="honeypotChamber"></span>
+              </button>
+            </div>
+            <div class="icon-row">
+              <button class="btn btn-icon" id="btn-merge-herd" aria-label="Mealybug Herd" aria-pressed="false" data-tip=" " hidden>
+                <span class="sprite" data-sprite="scaleHerd"></span>
+              </button>
+            </div>
+          </div>
+          <!-- Seeds (once seasons start): EAT them as usual, or STORE them on tunnel floors for winter -->
+          <div class="group" id="group-seed-mode" hidden>
+            <div class="label"><span class="px" data-text="Seeds"></span></div>
+            <div class="tool-row">
+              <button class="btn btn-tool is-on" id="btn-seed-eat" aria-label="Eat seeds" aria-pressed="true" data-tip="Eat|Seeds go to granaries|and are eaten as usual.|With every granary full,|seeds go by the flag,|then to empty granaries.">
+                <span class="px" data-text="EAT"></span>
+              </button>
+              <button class="btn btn-tool" id="btn-seed-store" aria-label="Store seeds" aria-pressed="false" data-tip="Store|Workers set seeds down|by the flag to eat|later. In winter seeds|give 4x the food (6x|with Diapause).">
+                <span class="px" data-text="STORE"></span>
+              </button>
+              <button class="btn btn-tool btn-flag" id="btn-seed-flag" aria-label="Where to store seeds" aria-pressed="false" data-tip="Store spot|Click this, then a|tunnel floor: stored|seeds go there first,|filling outward.">
+                <span class="sprite" data-sprite="storeFlag"></span>
+              </button>
+            </div>
+          </div>
+          <!-- Once fungus gardens are unlocked: how workers bringing back crumb split it -->
+          <div class="group" id="group-split" hidden>
+            <div class="split-head">
+              <span class="px split-name" id="split-name-crumb"></span>
+              <div class="readout split-help" data-tip="Crumb or Fungus|Share of crumb that|feeds fungus gardens.|The rest goes to the|queen or repletes.|Max 80% (red line)." data-tip-now><span class="px" data-text="?"></span></div>
+              <span class="px split-name" id="split-name-fungus"></span>
+            </div>
+            <div class="split-track">
+              <input class="slider" id="split" type="range" min="0" max="100" step="10" value="80" aria-label="Share of crumb that goes to fungus gardens">
+              <span class="split-limit" aria-hidden="true"></span>
+            </div>
+            <div class="slider-marks">
+              <span class="px" id="split-crumb"></span>
+              <span class="px" id="split-fungus"></span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Nuptial flight screen: honeydew, spent on the tree shown over the field -->
+        <div class="screen" id="screen-flight" hidden>
+          <div class="group">
+            <button class="btn btn-wide btn-back" aria-label="Back">
+              <span class="px" data-text="BACK"></span>
+            </button>
+          </div>
+          <div class="group">
+            <div class="label">
+              <span class="px" data-text="Honeydew"></span>
+            </div>
+            <div class="readout jelly-readout" id="jelly-box">
+              <span class="sprite" data-sprite="jelly"></span>
+              <span class="px" id="jelly"></span>
+            </div>
+            <!-- Food harvested this run toward the next drop of honeydew -->
+            <div class="progress" aria-label="Food toward the next honeydew"><div class="progress-fill" id="jelly-bar"></div></div>
+            <div class="progress-text"><span class="px" id="jelly-next"></span></div>
+          </div>
+          <div class="group">
+            <div class="label"><span class="px" data-text="Fly For"></span></div>
+            <div class="buy-row">
+              <button class="btn" id="btn-fly" aria-label="Take the nuptial flight">
+                <span class="px" id="fly-label"></span>
+              </button>
+              <div class="readout cost jelly-readout"><span class="px" id="jelly-gain"></span></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Settings screen: music volume, sound effects on or off, and RESET -->
+        <div class="screen" id="screen-settings" hidden>
+          <div class="group">
+            <button class="btn btn-wide btn-back" aria-label="Back">
+              <span class="px" data-text="BACK"></span>
+            </button>
+          </div>
+          <div class="group">
+            <div class="label"><span class="px" data-text="Music"></span></div>
+            <input class="slider" id="vol-music" type="range" min="0" max="100" step="10" aria-label="Music volume">
+            <div class="slider-value"><span class="px" id="vol-music-value"></span></div>
+          </div>
+          <div class="group">
+            <button class="check" id="btn-sfx" role="checkbox" aria-checked="true" aria-label="Sound effects" data-tip="Sound Effects|Clicks, digging and|the other sounds.">
+              <span class="check-box"><span class="sprite" data-sprite="checkMark"></span></span>
+              <span class="check-name"><span class="px" data-text="Sound"></span><span class="px" data-text="effects"></span></span>
+            </button>
+          </div>
+          <div class="group">
+            <button class="check" id="btn-peaceful" role="checkbox" aria-checked="false" aria-label="Peaceful mode" data-tip="Peaceful Mode|Winter, rain, raids,|the anteater, rove|beetles, fruit and|scouts all wait.|Food brought in while|it is on gives 20%|less honeydew.">
+              <span class="check-box"><span class="sprite" data-sprite="checkMark"></span></span>
+              <span class="check-name"><span class="px" data-text="Peaceful"></span><span class="px" data-text="mode"></span></span>
+            </button>
+          </div>
+          <!-- RESET: wipes everything (press twice). Kept here, away from the main menu. -->
+          <div class="group settings-reset">
+            <button class="btn btn-wide" id="btn-reset" aria-label="Reset everything" data-tip="Reset|Erases your whole|game. Press twice.">
+              <span class="px" id="reset-label"></span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Encyclopedia screen: the entries are shown in a window over the field -->
+        <div class="screen" id="screen-achieve" hidden>
+          <div class="group">
+            <button class="btn btn-wide btn-back" aria-label="Back">
+              <span class="px" data-text="BACK"></span>
+            </button>
+          </div>
+        </div>
+        <div class="screen" id="screen-ency" hidden>
+          <div class="group">
+            <button class="btn btn-wide btn-back" aria-label="Back">
+              <span class="px" data-text="BACK"></span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Dig screen: pick DIG or FILL and a size, then click a colored square in the dirt -->
+        <div class="screen" id="screen-dig" hidden>
+          <div class="group">
+            <button class="btn btn-wide btn-back" aria-label="Back">
+              <span class="px" data-text="BACK"></span>
+            </button>
+          </div>
+          <div class="group">
+            <div class="tool-row">
+              <button class="btn btn-tool is-on" id="btn-tool-dig" aria-label="Dig" aria-pressed="true">
+                <span class="px" data-text="DIG"></span>
+              </button>
+              <button class="btn btn-tool" id="btn-tool-fill" aria-label="Fill" aria-pressed="false">
+                <span class="px" data-text="FILL"></span>
+              </button>
+            </div>
+          </div>
+          <div class="group">
+            <div class="label"><span class="px" data-text="Size"></span></div>
+            <input class="slider" id="size" type="range" min="0" max="2" step="1" value="2" aria-label="Size: small, medium or large">
+            <div class="slider-marks">
+              <span class="px" data-text="S"></span>
+              <span class="px" data-text="M"></span>
+              <span class="px" data-text="L"></span>
+            </div>
+          </div>
+          <div class="group">
+            <div class="label"><span class="px" data-text="Shape"></span></div>
+            <div class="tool-row">
+              <button class="btn btn-tool btn-shape" id="btn-shape-square" aria-label="Square" aria-pressed="false" data-tip="Square">
+                <span class="sprite" data-sprite="shapeSquare"></span>
+              </button>
+              <button class="btn btn-tool btn-shape is-on" id="btn-shape-round" aria-label="Round" aria-pressed="true" data-tip="Round">
+                <span class="sprite" data-sprite="shapeRound"></span>
+              </button>
+            </div>
+          </div>
+          <div class="group">
+            <button class="check" id="btn-line-assist" role="checkbox" aria-checked="true" aria-label="Line assist" data-tip="Line Assist|Drags go straight|across or down, with|square corners.|Hold Shift to keep|to one line.">
+              <span class="check-box"><span class="sprite" data-sprite="checkMark"></span></span>
+              <span class="check-name"><span class="px" data-text="Line"></span><span class="px" data-text="assist"></span></span>
+            </button>
+          </div>
+          <div class="group">
+            <div class="label"><span class="px" id="tool-cost-label"></span></div>
+            <div class="readout"><span class="px" id="tool-cost"></span></div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Main display area: sky, grass, dirt, and the queen's cave -->
+      <div class="field">
+        <canvas id="field"></canvas>
+        <!-- The anteater is coming: FIGHT? YES or NO, in big yellow words over the field -->
+        <div class="ask-big" id="anteater-ask" hidden>
+          <span class="px" id="ask-title"></span>
+          <span class="px" id="ask-sub"></span>
+          <div class="ask-buttons">
+            <button class="ask-btn" id="ask-yes" aria-label="Fight the anteater"><span class="px"></span></button>
+            <button class="ask-btn" id="ask-no" aria-label="Let it go"><span class="px"></span></button>
+          </div>
+        </div>
+        <!-- The canopy (weaver ants, canopy.js): over the field while you are up there; the trip up and down plays on canopy-trip -->
+        <div class="canopy" id="canopy" hidden>
+          <canvas id="canopy-canvas"></canvas>
+          <button class="canopy-tab canopy-down" id="btn-canopy-down" aria-label="Back down to the nest" data-tip="Back to the nest"><span class="sprite" data-sprite="chevronDown"></span></button>
+        </div>
+        <canvas class="canopy-trip" id="canopy-trip" hidden></canvas>
+        <button class="canopy-tab canopy-up" id="btn-canopy-up" aria-label="Up to the weaver ants" data-tip="Up to the|weaver ants" hidden><span class="sprite" data-sprite="chevronUp"></span></button>
+        <!-- Nuptial flight upgrade tree, in a window over the dirt. Built by popup.js. -->
+        <div class="tree-window" id="tree" hidden>
+          <div class="titlebar">
+            <div class="title"><span class="px" data-text="Nuptial Flight"></span></div>
+          </div>
+          <div class="tree-intro">
+            <div class="tree-tabs" id="tree-tabs" hidden>
+              <button class="btn is-on" id="tree-tab-1" aria-label="Perk page one" aria-pressed="true"><span class="px" data-text="I"></span></button>
+              <button class="btn" id="tree-tab-2" aria-label="Perk page two" aria-pressed="false"><span class="px" data-text="II"></span></button>
+              <button class="btn" id="tree-tab-3" aria-label="Perk page three" aria-pressed="false" hidden><span class="px" data-text="III"></span></button>
+              <button class="btn tree-tab-star" id="tree-tab-star" aria-label="Platinum prestige" data-tip="Platinum prestige|Every page II perk|owned: restart for a|platinum star, +50%|idle gathering and|honeydew." hidden><canvas id="tree-star"></canvas></button>
+            </div>
+            <span class="px" id="tree-intro-1"></span>
+            <span class="px" id="tree-intro-2"></span>
+          </div>
+          <div class="tree-body" id="tree-body">
+            <canvas class="tree-lines" id="tree-lines"></canvas>
+          </div>
+        </div>
+        <!-- Encyclopedia, in a window over the dirt. Filled in by popup.js. -->
+        <!-- Achievements, in a window over the field. Rows built by popup.js. -->
+        <div class="tree-window" id="achieve" hidden>
+          <div class="titlebar">
+            <div class="title"><span class="px" data-text="Achievements"></span></div>
+          </div>
+          <div class="ach-count"><span class="px" id="achieve-count"></span></div>
+          <div class="ency-body" id="achieve-list"></div>
+        </div>
+        <div class="tree-window" id="ency" hidden>
+          <div class="titlebar">
+            <div class="title"><span class="px" data-text="Encyclopedia"></span></div>
+          </div>
+          <div class="ency-body" id="ency-list"></div>
+          <div class="ency-body" id="ency-entry" hidden>
+            <button class="btn ency-back" id="ency-back" aria-label="Back to the list">
+              <span class="px" data-text="LIST"></span>
+            </button>
+            <div class="ency-term"><span class="px" id="ency-term"></span></div>
+            <div class="ency-text" id="ency-text"></div>
+          </div>
+        </div>
+        <!-- Satellite colony (Mega colony): a small window that can be dragged by its title bar -->
+        <div class="sat-window" id="sat-window" role="dialog" aria-label="Satellite colony" hidden>
+          <div class="titlebar">
+            <div class="title"><span class="px" id="sat-title"></span></div>
+            <button class="btn btn-x" id="btn-sat-close" aria-label="Close">
+              <span class="px" id="sat-close-label"></span>
+            </button>
+          </div>
+          <div class="sat-body">
+            <canvas id="sat-canvas"></canvas>
+            <button class="btn sat-up" id="btn-sat-up" aria-label="Upgrade the satellite colony" data-tip=" ">
+              <span class="sprite" data-sprite="upgrade" data-scale="1"></span>
+            </button>
+          </div>
+        </div>
+        <!-- Second satellite colony (Polydomy): the same, drawn mirrored with light dirt and a very dark queen -->
+        <div class="sat-window sat-second" id="sat-window-2" role="dialog" aria-label="Second satellite colony" hidden>
+          <div class="titlebar">
+            <div class="title"><span class="px" id="sat-title-2"></span></div>
+            <button class="btn btn-x" id="btn-sat-close-2" aria-label="Close">
+              <span class="px" id="sat-close-label-2"></span>
+            </button>
+          </div>
+          <div class="sat-body">
+            <canvas id="sat-canvas-2"></canvas>
+            <button class="btn sat-up" id="btn-sat-up-2" aria-label="Upgrade the second satellite colony" data-tip=" ">
+              <span class="sprite" data-sprite="upgrade" data-scale="1"></span>
+            </button>
+          </div>
+        </div>
+        <!-- Flashes for the last 10 seconds before a fire ant raid when there are no soldiers -->
+        <!-- While a structure is chosen in the Build menu: where it can be placed -->
+        <div class="place-hint" id="place-hint" hidden>
+          <span class="px" id="place-hint-1"></span>
+          <span class="px" id="place-hint-2"></span>
+        </div>
+        <div class="raid-warning" id="raid-warning" role="alert" hidden>
+          <span class="px" id="raid-warning-1"></span>
+          <span class="px" id="raid-warning-2"></span>
+        </div>
+        <!-- Scouting: a find beyond the edge of the screen (click to send workers), and scouts out -->
+        <button class="btn scout-find" id="btn-scout" aria-label="Scouts found something" data-tip=" " hidden>
+          <span class="sprite" data-sprite="scoutInsect" data-scale="2"></span>
+        </button>
+        <div class="readout scout-status" id="scout-status" hidden><span class="px" id="scout-status-text"></span></div>
+        <div class="readout winter-badge" id="winter-badge" data-tip=" " data-tip-now hidden><span class="sprite" data-sprite="snow" data-scale="2"></span></div>
+        <!-- The last 2 minutes of summer: a snowflake with ! (its tip: seeds are worth more in winter) -->
+        <div class="readout winter-badge winter-warn" id="winter-warn" data-tip=" " data-tip-now hidden><span class="sprite" data-sprite="snow" data-scale="2"></span><span class="px warn-mark" data-text="!"></span></div>
+        <!-- Seasons: summer or winter, and the time left -->
+        <!-- After 20 minutes with no input: the colony earns Away rates until a click -->
+        <div class="idle-box" id="idle-box" role="alert" hidden>
+          <span class="px" data-text="Ants are earning"></span>
+          <span class="px" data-text="Away rates."></span>
+          <span class="px" data-text="Click anywhere"></span>
+          <span class="px" data-text="to resume."></span>
+        </div>
+        <!-- An autoclicker found (clicks at the same gap every time): Away rates until the mouse moves or the clicking stops -->
+        <div class="idle-box" id="autoclick-box" role="alert" hidden>
+          <span class="px" data-text="Ants are earning"></span>
+          <span class="px" data-text="Away rates."></span>
+          <span class="px" data-text="Move the mouse"></span>
+          <span class="px" data-text="to resume."></span>
+        </div>
+        <!-- Alarm pheromone (after the first fire ant raid): press, then click a spot for the soldiers -->
+        <button class="btn btn-alarm" id="btn-alarm" aria-label="Alarm pheromone" data-tip="Alarm Pheromone|Press, then click a|spot. Soldiers rush|there." hidden>
+          <span class="sprite" data-sprite="alarm" data-scale="1"></span>
+        </button>
+        <div class="zoom">
+          <button class="btn btn-zoom" id="btn-zoom-out" aria-label="Zoom out" data-tip="Zoom out">
+            <span class="px" id="zoom-out-label"></span>
+          </button>
+          <button class="btn btn-zoom" id="btn-zoom-in" aria-label="Zoom in" data-tip="Zoom in">
+            <span class="px" id="zoom-in-label"></span>
+          </button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Shown when an ant is bought without enough room dug out for it -->
+  <div class="dialog-cover" id="no-room" hidden>
+    <div class="dialog" role="alertdialog" aria-label="Not enough room! Dig a larger area for the ants to live">
+      <div class="titlebar">
+        <div class="title"><span class="px" id="dialog-title-text"></span></div>
+      </div>
+      <div class="dialog-body">
+        <div class="dialog-lines" id="dialog-lines"></div>
+        <div class="dialog-buttons">
+          <button class="btn" id="btn-no-room-ok" aria-label="OK">
+            <span class="px" data-text="OK"></span>
+          </button>
+          <button class="btn" id="btn-no-room-cancel" aria-label="Cancel" hidden>
+            <span class="px" data-text="CANCEL"></span>
+          </button>
+          <button class="btn" id="btn-no-room-later" aria-label="Later" hidden>
+            <span class="px" data-text="LATER"></span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- First-run tutorial: asks "30-second tutorial?", then points at a few buttons -->
+  <div class="tut-cover" id="tut" hidden>
+    <div class="dialog tut-box" id="tut-box" role="dialog" aria-label="Tutorial">
+      <div class="titlebar">
+        <div class="title"><span class="px" data-text="Tutorial"></span></div>
+      </div>
+      <div class="dialog-body">
+        <div class="dialog-lines" id="tut-lines"></div>
+        <div class="tut-buttons">
+          <button class="btn" id="btn-tut-yes" aria-label="Yes">
+            <span class="px" id="tut-yes-label"></span>
+          </button>
+          <button class="btn" id="btn-tut-no" aria-label="No">
+            <span class="px" data-text="NO"></span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Welcome Back: shown after the game was closed for a while. Lines written by popup.js. -->
+  <div class="tut-cover welcome-cover" id="welcome" hidden>
+    <div class="dialog tut-box" id="welcome-box" role="dialog" aria-label="Welcome back">
+      <div class="titlebar">
+        <div class="title"><span class="px" data-text="Welcome Back"></span></div>
+      </div>
+      <div class="dialog-body">
+        <div class="dialog-lines" id="welcome-lines"></div>
+        <div class="tut-buttons">
+          <button class="btn" id="btn-welcome-ok" aria-label="OK">
+            <span class="px" data-text="OK"></span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- The first fire ant raid: what to do. Lines written by popup.js. -->
+  <div class="tut-cover welcome-cover" id="raid-intro" hidden>
+    <div class="dialog tut-box" id="raid-box" role="dialog" aria-label="Fire ants">
+      <div class="titlebar">
+        <div class="title"><span class="px" data-text="Fire Ants!"></span></div>
+      </div>
+      <div class="dialog-body">
+        <div class="dialog-lines" id="raid-lines"></div>
+        <div class="tut-buttons">
+          <button class="btn" id="btn-raid-ok" aria-label="OK">
+            <span class="px" data-text="OK"></span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Name label shown when the mouse rests on an icon -->
+  <div class="tip" id="tip" hidden></div>
+  <!-- How full the midden under the mouse is -->
+  <div class="tip" id="midden-tip" hidden></div>
+
+  <script src="font.js"></script>
+  <script src="sprites.js"></script>
+  <script src="ants.js"></script>
+  <script src="field.js"></script>
+  <script src="satellite.js"></script>
+  <script src="firenest.js"></script>
+  <script src="encyclopedia.js"></script>
+  <script src="sound.js"></script>
+  <script src="canopy.js"></script>
+  <script src="popup.js"></script>
+  <script src="dev-keys.js"></script>
+  <script src="no-inspect.js"></script>
+</body>
+</html>

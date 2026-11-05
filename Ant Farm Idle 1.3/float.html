@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Ant Farm Idle</title>
+  <link rel="stylesheet" href="popup.css">
+  <link rel="stylesheet" href="float.css">
+</head>
+<body class="launcher">
+  <!--
+    The launcher: a small window that opens the floating game.
+    Chrome only lets a page open a floating (picture-in-picture) window when
+    the player clicks something on that page, and the floating window closes
+    when this page closes. So this window has the float button and must stay
+    open (it minimizes itself) while the game floats.
+  -->
+  <div class="window">
+    <div class="titlebar">
+      <div class="title"><span class="px" data-text="Ant Farm Idle"></span></div>
+    </div>
+    <div class="launcher-body">
+      <button class="btn btn-icon" id="btn-float" aria-label="Float the game">
+        <span class="sprite" data-sprite="float"></span>
+      </button>
+      <div class="message" id="message" aria-live="polite"></div>
+    </div>
+  </div>
+
+  <script src="font.js"></script>
+  <script src="sprites.js"></script>
+  <script src="float.js"></script>
+</body>
+</html>

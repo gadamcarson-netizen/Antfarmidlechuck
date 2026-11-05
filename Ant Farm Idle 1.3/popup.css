@@ -1,0 +1,954 @@
+/* Ant Tycoon: retro window styling.
+   One "game pixel" is 2 screen pixels, so every size here is an even number. */
+
+:root {
+  --frame: #fdf351;       /* yellow window border */
+  --panel: #c3c3c3;       /* panel and button face */
+  --panel-hover: #adadad; /* button face while hovered */
+  --panel-shade: #828282; /* shadow edge */
+  --panel-light: #ffffff; /* highlight edge */
+  --dark: #414141;        /* title bar dark gray */
+  --line: #000000;        /* divider lines */
+  --ink: #0000ce;         /* font color */
+  --ink-title: #4ca7e5;   /* font color on the dark title box */
+  --dirt: #502e0e;
+}
+
+* { box-sizing: border-box; }
+
+html, body { margin: 0; padding: 0; }
+
+body {
+  width: 520px;
+  height: 440px;
+  overflow: hidden;
+  background: var(--panel);
+  color: var(--ink);
+  cursor: default;
+  user-select: none;
+}
+
+.window {
+  width: 520px;
+  height: 440px;
+  display: flex;
+  flex-direction: column;
+  border: 2px solid var(--frame);
+}
+
+/* ---------- Title bar ---------- */
+
+.titlebar {
+  flex: none;
+  height: 26px;
+  display: flex;
+  justify-content: center;
+  /* 2px checkerboard of dark gray over light gray */
+  background-color: var(--panel);
+  background-image: conic-gradient(var(--dark) 25%, transparent 0 50%, var(--dark) 0 75%, transparent 0);
+  background-size: 4px 4px;
+}
+
+.title {
+  display: flex;
+  align-items: center;
+  padding: 0 8px;
+  background: var(--dark);
+  color: var(--ink-title);
+}
+
+
+/* The window's name can be clicked and typed over */
+.title.can-edit { cursor: text; }
+.caret {
+  width: 3px;
+  height: 14px;
+  margin-left: 3px;
+  background: var(--ink-title);
+  animation: caret-blink 1s steps(1) infinite;
+}
+.caret[hidden] { display: none; }
+@keyframes caret-blink {
+  50% { visibility: hidden; }
+}
+
+/* ---------- Layout ---------- */
+
+.content {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+}
+
+.panel {
+  position: relative;
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  width: 148px;
+  background: var(--panel);
+  border-right: 2px solid var(--line);
+  box-shadow: inset 2px 2px 0 var(--panel-light);
+}
+
+.screen {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+}
+.screen[hidden] { display: none; }
+
+/* Scroll bar (only appears when a menu is too tall, like Upgrades) */
+.screen::-webkit-scrollbar { width: 8px; }
+.screen::-webkit-scrollbar-track {
+  background-color: var(--panel);
+  background-image: conic-gradient(var(--panel-shade) 25%, transparent 0 50%, var(--panel-shade) 0 75%, transparent 0);
+  background-size: 4px 4px;
+  border-left: 2px solid var(--line);
+}
+.screen::-webkit-scrollbar-thumb {
+  background: var(--panel);
+  border: 2px solid var(--line);
+  box-shadow: inset 2px 2px 0 var(--panel-light);
+}
+
+.group {
+  padding: 6px 4px 6px 6px;
+  border-bottom: 2px solid var(--line);
+}
+
+.field {
+  flex: 1;
+  min-width: 0;
+  position: relative;
+  background: var(--dirt);
+}
+
+.field > canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  image-rendering: pixelated;
+}
+
+/* While zoomed in, the field can be dragged around */
+.field > canvas.can-drag { cursor: grab; }
+.field > canvas.can-drag:active { cursor: grabbing; }
+
+/* Over the bread crumb: it can be clicked */
+.field > canvas.on-crumb, .field > canvas.on-crumb:active { cursor: pointer; }
+
+/* Floating "+1" numbers over the field */
+.pops {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+.pop { position: absolute; }
+.pop-crumb { color: var(--ink); }
+/* What fire ants take */
+.pop-steal { color: #d8281e; }
+/* A click frenzy: big yellow words with a black edge */
+.ask-big { position: absolute; inset: 0; z-index: 7; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; pointer-events: none; }
+.ask-big[hidden] { display: none; }
+.ask-big .px { color: #fdf351; line-height: 0; filter: drop-shadow(2px 0 0 #000) drop-shadow(-2px 0 0 #000) drop-shadow(0 2px 0 #000) drop-shadow(0 -2px 0 #000); }
+.ask-buttons { display: flex; gap: 28px; pointer-events: auto; margin-top: 6px; }
+.ask-btn { background: none; border: none; padding: 4px; cursor: pointer; }
+.ask-btn:hover .px, .ask-btn:focus-visible .px { filter: brightness(1.3) drop-shadow(2px 0 0 #000) drop-shadow(-2px 0 0 #000) drop-shadow(0 2px 0 #000) drop-shadow(0 -2px 0 #000); }
+.pop-big {
+  color: #fdf351;
+  z-index: 5;
+  filter: drop-shadow(2px 0 0 #000) drop-shadow(-2px 0 0 #000) drop-shadow(0 2px 0 #000) drop-shadow(0 -2px 0 #000);
+}
+
+/* I love you cutie: pink, with the same black edge */
+.pop-love { color: #ff6fae; }
+
+/* A Latin name in a message: red italics, like the honeydew tree's origins */
+.dialog-lines .latin { color: #b3261e; }
+.dialog-lines .latin canvas { transform: skewX(-14deg); }
+/* The food a worker brings to the queen: just the number, a little see-through */
+.pop-queen {
+  color: var(--ink-title);
+  opacity: 0.8;   /* a little see-through */
+}
+
+/* "Click!" with an arrow pointing at the first bread crumb */
+.hint {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--ink);
+  animation: hint-bob 0.8s steps(1) infinite;
+}
+.hint[hidden] { display: none; }
+.hint-left { flex-direction: row-reverse; }
+@keyframes hint-bob {
+  0% { translate: 0 0; }
+  50% { translate: -4px 0; }
+}
+.hint-left { animation-name: hint-bob-left; }
+@keyframes hint-bob-left {
+  0% { translate: 0 0; }
+  50% { translate: 4px 0; }
+}
+
+/* The little bar by the mouse while the crumb can't be clicked yet */
+.cooldown {
+  position: fixed;
+  z-index: 10;
+  width: 24px;
+  height: 8px;
+  background: #ffffff;
+  border: 2px solid var(--line);
+  pointer-events: none;
+}
+.cooldown[hidden] { display: none; }
+.cooldown > div {
+  height: 100%;
+  background: var(--ink);
+}
+
+/* Zoom buttons in the bottom right corner of the field */
+.zoom {
+  position: absolute;
+  right: 4px;
+  bottom: 4px;
+  display: flex;
+  gap: 2px;
+}
+
+/* Alarm pheromone button: bottom-left corner of the field */
+.btn.btn-alarm {
+  position: absolute;
+  left: 4px;
+  bottom: 4px;
+  width: 26px;
+  height: 26px;
+  padding: 0;
+}
+.btn.btn-alarm[hidden] { display: none; }
+
+/* Food box with its ? box beside it */
+.food-row { display: flex; gap: 4px; }
+.food-row .readout:first-child { flex: 1; min-width: 0; }
+.food-row .food-help { flex: none; width: 26px; padding: 0; cursor: help; }
+
+/* Fire ants coming, and no soldiers: a flashing red box at the top of the field */
+.raid-warning {
+  position: absolute;
+  top: 34px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 4;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 5px 8px;
+  background: #c8281e;
+  border: 2px solid #ffffff;
+  color: #ffffff;             /* the pixel letters are drawn once, in this color */
+  animation: raid-flash 0.6s steps(1) infinite;
+  pointer-events: none;
+}
+.raid-warning[hidden] { display: none; }
+
+/* No input for 20 minutes: Away rates until a click (muted red, see-through, near the bottom of the field) */
+.idle-box {
+  position: absolute;
+  bottom: 40px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 5;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 8px 12px;
+  background: rgba(140, 50, 44, 0.7);   /* muted red, partly see-through */
+  border: 2px solid rgba(255, 255, 255, 0.6);
+  color: #ffffff;
+  pointer-events: none;
+}
+.idle-box[hidden] { display: none; }
+
+/* Scouting: the find at the edge of the grass, and the scouts-out timer */
+.btn.scout-find {
+  position: absolute;
+  top: 30px;
+  width: 30px;
+  height: 26px;
+  padding: 0;
+  z-index: 3;
+}
+.btn.scout-find.on-left { left: 4px; }
+.btn.scout-find.on-right { right: 4px; }
+.btn.scout-find[hidden] { display: none; }
+.scout-status {
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  padding: 2px 4px;
+  z-index: 3;
+  pointer-events: none;
+}
+.scout-status[hidden] { display: none; }
+/* A snowflake in the top-right corner of the field while it is winter (its tip: the time left) */
+.winter-badge {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  display: flex;
+  align-items: center;
+  padding: 3px;
+  z-index: 3;
+  cursor: help;
+}
+.winter-badge[hidden] { display: none; }
+.winter-warn { gap: 2px; }
+.winter-warn .warn-mark { color: #b3261e; }
+.btn.perk.page-2 { outline: 2px solid #d9a826; outline-offset: -4px; }   /* page II perks: a gold edge */
+.btn.perk.page-3 { outline: 2px solid #f4f8fa; outline-offset: -4px; }   /* page III perks: a silver edge */
+.tree-tabs { display: flex; gap: 4px; align-self: flex-start; }
+.tree-tabs[hidden] { display: none; }
+.tree-tabs .btn { width: 30px; height: 18px; padding: 0; }
+.tree-tabs #tree-tab-3 { width: 40px; }
+.tree-tabs .btn[hidden] { display: none; }
+.tree-tab-star canvas { width: 10px; height: 9px; image-rendering: pixelated; display: block; margin: auto; }
+.title-stars { margin-left: 6px; image-rendering: pixelated; }
+.title-stars[hidden] { display: none; }
+.px.is-red { color: #e01c1c; }
+
+.dialog-choices { display: flex; justify-content: center; gap: 8px; margin-top: 6px; }
+.dialog-choices .btn { width: 56px; }
+
+/* Where the chosen structure can go: bottom left of the field, clear of the
+   zoom buttons. Clicks go through it to the field. */
+.place-hint {
+  position: absolute;
+  left: 6px;
+  bottom: 6px;
+  z-index: 3;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 3px;
+  padding: 4px 6px;
+  background: #c0c0c0;
+  border: 2px solid #000000;
+  pointer-events: none;
+}
+.place-hint[hidden] { display: none; }
+.place-hint.is-faded { opacity: 0.15; }   /* the mouse is near it: see what's underneath */
+@keyframes raid-flash {
+  0% { background: #c8281e; }
+  50% { background: #5a0d08; }
+}
+
+.btn.btn-zoom {
+  width: 26px;
+  height: 26px;
+  padding: 0;
+}
+
+/* ---------- Text (drawn by font.js) and pictures (drawn by sprites.js) ---------- */
+
+.px, .sprite { display: inline-flex; }
+
+.px canvas, .sprite canvas {
+  display: block;
+  image-rendering: pixelated;
+  pointer-events: none;
+}
+
+.label {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  margin-bottom: 6px;
+}
+
+/* White number box, like the Health box in the reference */
+.readout {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 30px;
+  padding: 0 3px;
+  background: #ffffff;
+  border: 2px solid var(--line);
+  overflow: hidden;
+}
+
+/* ---------- Buttons ---------- */
+
+.btn {
+  appearance: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 30px;
+  margin: 0;
+  padding: 0 8px;
+  color: inherit;
+  background: var(--panel);
+  border: 2px solid var(--panel-shade);
+  border-radius: 0;
+  box-shadow: inset 2px 2px 0 var(--panel-light), inset -2px -2px 0 var(--panel-shade);
+  cursor: pointer;
+}
+
+.btn-wide { width: 100%; }
+
+/* Nuptial flight: as wide as two of the square picture buttons */
+.btn.btn-flight {
+  width: 89px;     /* two 42 px buttons and the 5 px gap between them */
+  height: 42px;
+  padding: 0;
+}
+
+/* Square picture button */
+.btn-icon {
+  width: 42px;
+  height: 42px;
+  padding: 0;
+}
+
+/* Main menu: buttons stacked top to bottom */
+.menu {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+/* Square picture buttons side by side, starting from the left */
+.icon-row {
+  display: flex;
+  gap: 5px;
+}
+
+.btn:hover { background: var(--panel-hover); }
+
+/* RESET while it asks SURE?: a red button with white letters */
+.btn.is-armed,
+.btn.is-armed:hover { background: #c8281e; }
+.btn.is-armed .px { color: #ffffff; }
+
+.btn:active {
+  box-shadow: inset 2px 2px 0 var(--panel-shade), inset -2px -2px 0 var(--panel-light);
+}
+.btn:active .px, .btn:active .sprite { transform: translate(2px, 2px); }
+
+.btn:focus { outline: none; }
+.btn:focus-visible { outline: 2px dotted var(--line); outline-offset: -8px; }
+
+/* A button you cannot use right now (not enough food) */
+.btn.is-off { cursor: default; }
+.btn.is-off:hover { background: var(--panel); }
+.btn.is-off:active {
+  box-shadow: inset 2px 2px 0 var(--panel-light), inset -2px -2px 0 var(--panel-shade);
+}
+.btn.is-off:active .px { transform: none; }
+
+/* A button that is switched on (the chosen tool): pressed in and darker */
+.btn.is-on {
+  background: var(--panel-hover);
+  box-shadow: inset 2px 2px 0 var(--panel-shade), inset -2px -2px 0 var(--panel-light);
+}
+.btn.is-on .px { transform: translate(2px, 2px); }
+
+/* DIG and FILL side by side, sharing the width */
+.tool-row {
+  display: flex;
+  gap: 6px;
+}
+.tool-row .btn {
+  flex: 1;
+  min-width: 0;
+  padding: 0;
+}
+.tool-row .btn-flag { flex: 0 0 28px; }   /* the store flag, beside STORE */
+.tool-row .btn-flag.is-wide { flex: 1 1 auto; }   /* before the seasons: the flag alone, the whole row */
+.tool-row .btn[hidden] { display: none; }
+.btn.is-on .sprite { transform: translate(2px, 2px); }
+
+/* Size slider: three stops only (small, medium, large) */
+.slider {
+  -webkit-appearance: none;
+  appearance: none;
+  display: block;
+  width: 100%;
+  height: 22px;
+  margin: 0;
+  padding: 0;
+  background: transparent;
+  cursor: pointer;
+}
+.slider:focus { outline: none; }
+.slider::-webkit-slider-runnable-track {
+  box-sizing: border-box;
+  height: 10px;
+  background: #ffffff;
+  border: 2px solid var(--line);
+}
+.slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  box-sizing: border-box;
+  width: 14px;
+  height: 22px;
+  margin-top: -8px;
+  background: var(--panel);
+  border: 2px solid var(--panel-shade);
+  border-radius: 0;
+  box-shadow: inset 2px 2px 0 var(--panel-light), inset -2px -2px 0 var(--panel-shade);
+}
+.slider:hover::-webkit-slider-thumb { background: var(--panel-hover); }
+
+/* The species name over the worker count (Ants menu): small, red and slanted, like a Latin name */
+.species { display: flex; justify-content: center; margin-bottom: 6px; color: #b3261e; }
+.species canvas { transform: skewX(-14deg); }
+
+/* A checkbox (Line assist in the Dig menu): a white box with a check mark, and its name */
+.check {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  padding: 0;
+  background: none;
+  border: 0;
+  color: var(--ink);
+  cursor: pointer;
+}
+.check-box {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 20px;
+  height: 20px;
+  background: #ffffff;
+  border: 2px solid var(--line);
+}
+.check[aria-checked="false"] .check-box .sprite { visibility: hidden; }
+.check-name { display: flex; flex-direction: column; align-items: flex-start; gap: 3px; }
+
+/* Crumb or fungus split (Build menu): small names either side of a ?, a
+   slider with a red line at the 80% fungus limit, and the two shares */
+.split-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px; }
+.split-head .split-help { flex: none; width: 26px; height: 22px; padding: 0; cursor: help; }
+.split-track { position: relative; }
+.split-limit {
+  position: absolute;
+  top: 0;
+  left: calc(7px + 0.8 * (100% - 14px) - 1px);   /* 80% along the thumb's travel */
+  width: 2px;
+  height: 22px;
+  background: #d8281e;
+  pointer-events: none;
+}
+
+/* S, M and L under the slider's three stops */
+.slider-marks {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 4px;
+  padding: 0 1px;
+}
+
+.buy-row {
+  display: flex;
+  gap: 2px;
+  margin-top: 6px;
+}
+.buy-row .btn { flex: none; padding: 0 2px; }
+
+/* Tighter spacing for the Upgrades menu, leaving room for its scroll bar */
+.group.compact { padding: 4px 2px; }
+.group.compact .readout { padding: 0; }
+/* The fire ant nest picture fills its box */
+.readout.fire-nest { height: auto; padding: 0; }
+.readout.fire-nest canvas { display: block; image-rendering: pixelated; }
+/* Upgrades that do two things show two lines */
+.group.compact .readout.two-lines { flex-direction: column; height: auto; gap: 4px; padding: 5px 0; }
+/* Welcome Back dims the game behind it */
+.welcome-cover { background: rgba(0, 0, 0, 0.25); }
+.group.compact .label { margin-bottom: 4px; }
+.group.compact .buy-row { margin-top: 4px; }
+.buy-row .cost { flex: 1; min-width: 0; padding: 0; }
+
+/* Name label that appears when the mouse rests on an icon */
+.tip {
+  position: fixed;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 3px 4px;
+  color: var(--ink);
+  background: #ffffe1;
+  border: 2px solid var(--line);
+  pointer-events: none;
+}
+.tip[hidden] { display: none; }
+.tip .tip-key { display: flex; align-items: center; gap: 3px; }
+.tip .tip-swatch { flex: none; width: 6px; height: 6px; border: 1px solid #000; }
+.tip .tip-icon { flex: none; width: 20px; height: 13px; display: flex; align-items: center; justify-content: center; }
+.tip .tip-icon canvas { display: block; image-rendering: pixelated; }
+.tip .tip-branch { flex: none; width: 8px; height: 9px; margin: -6px 0 0 9px; border-left: 2px solid var(--ink); border-bottom: 2px solid var(--ink); }
+.tip .tip-graph { width: 240px; height: 100px; image-rendering: pixelated; border: 1px solid var(--line); margin-top: 2px; }
+
+/* Buttons that are hidden (FLOAT inside the floating window) */
+.btn[hidden] { display: none; }
+
+/* Small message window ("Not enough room!") in front of the game */
+.dialog-cover {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.dialog-cover[hidden] { display: none; }
+
+.dialog {
+  background: var(--panel);
+  border: 2px solid var(--frame);
+  box-shadow: 4px 4px 0 var(--line);
+}
+
+.dialog-body {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 12px 16px 10px;
+  border-top: 2px solid var(--line);
+  box-shadow: inset 2px 2px 0 var(--panel-light);
+}
+.dialog-body .btn { width: 64px; margin-top: 6px; }
+.dialog-buttons { display: flex; gap: 10px; }
+.dialog-buttons .btn[hidden] { display: none; }
+#btn-no-room-cancel { width: 96px; }
+.dialog-picture { display: block; margin: 6px auto 2px; image-rendering: pixelated; background: #8b6a3e; border: 2px solid var(--line); padding: 6px; box-sizing: content-box; }
+#btn-no-room-later { width: 84px; }
+
+/* ---------- Nuptial flight ---------- */
+
+/* Royal jelly count: a drop and the number */
+.jelly-readout { gap: 6px; }
+
+/* The upgrade tree: a window in front of the dirt */
+.tree-window {
+  position: absolute;
+  inset: 8px;
+  z-index: 5;
+  display: flex;
+  flex-direction: column;
+  background: var(--panel);
+  border: 2px solid var(--frame);
+  box-shadow: 4px 4px 0 var(--line);
+}
+.tree-window[hidden] { display: none; }
+
+/* Satellite colony: a small window over the field, moved by its title bar */
+.sat-window {
+  position: absolute;
+  left: 12px;
+  top: 40px;
+  z-index: 6;
+  display: flex;
+  flex-direction: column;
+  background: var(--panel);
+  border: 2px solid var(--frame);
+  box-shadow: 4px 4px 0 var(--line);
+}
+.sat-window[hidden] { display: none; }
+.sat-window.sat-second { top: 168px; }   /* opens below the first */
+.sat-window .titlebar { position: relative; height: 18px; cursor: move; }
+.btn.btn-x {
+  position: absolute;
+  right: 2px;
+  top: 1px;
+  width: 16px;
+  height: 16px;
+  padding: 0;
+}
+.sat-body { position: relative; border-top: 2px solid var(--line); line-height: 0; }
+.sat-body canvas { display: block; image-rendering: pixelated; }
+.btn.sat-up {
+  position: absolute;
+  right: 2px;
+  bottom: 2px;
+  width: 18px;
+  height: 20px;
+  padding: 0;
+}
+
+.tree-body {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  border-top: 2px solid var(--line);
+  box-shadow: inset 2px 2px 0 var(--panel-light);
+}
+
+/* Arrows between upgrades, drawn by popup.js */
+.tree-lines {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  image-rendering: pixelated;
+  pointer-events: none;
+}
+
+/* One upgrade: its name, then its price in royal jelly */
+.btn.perk {
+  position: absolute;
+  flex-direction: column;
+  gap: 4px;
+  width: 74px;
+  height: 50px;
+  padding: 0;
+}
+.perk-name {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+/* A name line too wide for the box (Trophallaxis, polymorphism) is drawn a little narrower to fit. */
+.perk-name .px { max-width: 62px; }
+.perk-name canvas { max-width: 62px; height: auto !important; }
+.perk-cost {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+}
+
+/* Not enough royal jelly: no hover change */
+.btn.perk.is-short { cursor: default; }
+.btn.perk.is-short:hover { background: var(--panel); }
+.btn.perk.is-short:active { box-shadow: inset 2px 2px 0 var(--panel-light), inset -2px -2px 0 var(--panel-shade); }
+.btn.perk.is-short:active .px, .btn.perk.is-short:active .sprite { transform: none; }
+
+/* Needs the upgrade before it first: darker face */
+.btn.perk.is-locked, .btn.perk.is-locked:hover { background: var(--panel-hover); }
+
+/* Bought as many times as it can be: gold, pressed in */
+.btn.perk.is-owned, .btn.perk.is-owned:hover {
+  background: var(--frame);
+  cursor: default;
+  box-shadow: inset 2px 2px 0 var(--panel-shade), inset -2px -2px 0 var(--panel-light);
+}
+.sprite[hidden] { display: none; }
+
+/* ---------- Settings ---------- */
+
+/* The value under a volume slider */
+.slider-value {
+  display: flex;
+  justify-content: center;
+  margin-top: 4px;
+}
+
+/* ---------- Encyclopedia (a window over the field, like the flight tree) ---------- */
+
+.ency-body {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 8px 6px 8px 8px;
+  overflow-y: auto;
+  border-top: 2px solid var(--line);
+  box-shadow: inset 2px 2px 0 var(--panel-light);
+}
+.ency-body[hidden] { display: none; }
+.ency-body::-webkit-scrollbar { width: 8px; }
+.ency-body::-webkit-scrollbar-track {
+  background-color: var(--panel);
+  background-image: conic-gradient(var(--panel-shade) 25%, transparent 0 50%, var(--panel-shade) 0 75%, transparent 0);
+  background-size: 4px 4px;
+  border-left: 2px solid var(--line);
+}
+.ency-body::-webkit-scrollbar-thumb {
+  background: var(--panel);
+  border: 2px solid var(--line);
+  box-shadow: inset 2px 2px 0 var(--panel-light);
+}
+
+/* One button per term in the list */
+.ency-body .btn.ency-item {
+  flex: none;
+  justify-content: flex-start;
+  width: 100%;
+  padding: 0 8px;
+}
+
+/* The open entry: a button back to the list, the term, then its text */
+.btn.ency-back { flex: none; align-self: flex-start; }
+.ency-term { margin: 6px 0 4px; }
+.ency-text {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+/* A heading inside an entry (the Help sections), with a gap above it */
+.ency-text .ency-head { margin-top: 10px; }
+.ency-text .ency-head:first-child { margin-top: 0; }
+
+/* Progress toward the next royal jelly */
+.progress {
+  height: 12px;
+  margin-top: 6px;
+  background: #ffffff;
+  border: 2px solid var(--line);
+}
+.progress-fill {
+  width: 0;
+  height: 100%;
+  background: var(--frame);
+}
+.progress-text {
+  display: flex;
+  justify-content: center;
+  margin-top: 4px;
+}
+
+/* Lines of a message window */
+.dialog-lines {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+.dialog-lines .px:first-child { margin-bottom: 4px; }
+.dialog-lines > .px { min-height: 18px; }   /* every line as tall as one with a descender (g, p, y), so the spacing is even */
+.group[hidden] { display: none; }
+
+/* Build menu: a see-through padlock over things that are still locked */
+.btn-icon.is-locked { position: relative; }
+.btn-icon .sprite.lock {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  margin: -10px 0 0 -9px;   /* half the lock's 18 x 20 size: centered on the button */
+  opacity: 0.7;
+  pointer-events: none;
+}
+.btn.is-locked:active .sprite { transform: none; }
+
+/* ---------- First-run tutorial ---------- */
+
+/* Covers the window (see-through) so only the tutorial can be clicked */
+.tut-cover {
+  position: fixed;
+  inset: 0;
+  z-index: 25;
+}
+.tut-cover[hidden] { display: none; }
+.tut-box { position: absolute; }   /* placed over the field by popup.js */
+.tut-buttons { display: flex; gap: 8px; }
+.tut-buttons .btn[hidden] { display: none; }
+
+/* The button the tutorial is talking about: a blinking yellow frame */
+.tut-point,
+.btn.tut-point {
+  outline: 3px solid var(--tut-a, #fdf351);
+  outline-offset: 1px;
+  animation: tut-blink 0.8s steps(1) infinite;
+}
+@keyframes tut-blink {
+  0% { outline-color: #fdf351; }
+  50% { outline-color: #000000; }
+}
+
+/* Honeydew tree: a line of story above the upgrades */
+.tree-intro {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  padding: 5px 4px;
+  border-top: 2px solid var(--line);
+}
+
+/* In a honeydew upgrade's tip: which ants it came from, in red, slanted */
+.tip .tip-origin { color: #b3261e; }
+.tip .tip-origin canvas { transform: skewX(-14deg); }
+
+/* ---------- Achievements ---------- */
+.btn-achieve { position: relative; }
+/* The red ! on the button, and on a row ready to claim */
+.ach-alert { position: absolute; top: 3px; right: 4px; }
+.ach-count { padding: 4px 8px; border-top: 2px solid var(--line); }
+.ency-body .btn.ach-item {
+  position: relative;
+  height: auto;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  padding: 5px 8px;
+}
+.btn.ach-item.is-ready, .btn.ach-item.is-ready:hover { background: #fdf351; }
+.btn.ach-item.is-claimed, .btn.ach-item.is-claimed:hover {
+  background: #a8e6a1;   /* claimed: green */
+  cursor: default;
+}
+.btn.ach-item.is-old, .btn.ach-item.is-old:hover {
+  background: #f08c8c;   /* done before a platinum restart: red, and worth honeydew again */
+  cursor: default;
+}
+
+/* Minor workers / Major soldiers: a small button beside the count */
+.count-row { display: flex; gap: 4px; }
+.count-row .readout { flex: 1; min-width: 0; }
+.btn.btn-flat { flex: none; width: 30px; height: 30px; padding: 0; }
+
+/* Developer keys list (dev-keys.js only) */
+.dev-list { position: absolute; left: 0; right: 0; bottom: 0; padding: 4px 6px 6px; display: flex; flex-direction: column; gap: 2px; border-top: 2px solid var(--line); }
+.dev-list[hidden] { display: none; }
+
+/* ---------- The canopy (weaver ants) ---------- */
+.canopy { position: absolute; inset: 0; z-index: 5; background: #c8eef8; }
+.canopy[hidden] { display: none; }
+.branch-note { position: absolute; z-index: 1; pointer-events: none; color: #ffffff; line-height: 0; }
+.branch-note[hidden] { display: none; }
+.canopy > canvas { position: absolute; inset: 0; width: 100%; height: 100%; image-rendering: pixelated; cursor: default; }
+.canopy-trip { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 8; image-rendering: pixelated; }
+.canopy-trip[hidden] { display: none; }
+.canopy-tab {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 6;
+  padding: 3px 7px;
+  line-height: 0;
+  background: #9a9a9a;
+  border: 2px solid #5e5e5e;
+  cursor: pointer;
+}
+.canopy-tab:hover { background: #b0b0b0; }
+.canopy-tab[hidden] { display: none; }
+.canopy-up { top: 4px; left: 4px; transform: none; }   /* (on the left, clear of the nest hole) */
+.canopy-up.is-new { animation: canopy-new 0.8s steps(1) infinite; }   /* weaver ants just unlocked: flashing until clicked */
+@keyframes canopy-new {
+  0% { background: #fdf351; border-color: #000000; }
+  50% { background: #9a9a9a; border-color: #5e5e5e; }
+}
+.canopy-down { bottom: 4px; }
+.weaver-row { display: flex; gap: 4px; align-items: stretch; }
+.weaver-row .readout { flex: 1; min-width: 0; }
+.btn-leaf { position: relative; flex: none; }
+.btn-leaf .leaf-badge { position: absolute; right: 3px; bottom: 3px; pointer-events: none; }
